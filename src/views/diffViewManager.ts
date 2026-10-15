@@ -5,10 +5,22 @@ import { confirmLargeFiles } from '../utils/config';
 import { computeDiffStats } from '../utils/diffStats';
 import { showDiffStats } from '../utils/statsReporter';
 
+/** Records opened comparisons so they can be replayed from the palette. */
+export interface DiffRecorder {
+  record(left: DiffSource, right: DiffSource): Promise<void> | void;
+}
+
+let recorder: DiffRecorder | undefined;
+
+/** Installs the recorder used by every comparison opened through the manager. */
+export function setDiffRecorder(next: DiffRecorder | undefined): void {
+  recorder = next;
+}
+
 /**
  * Opens the native diff editor for a pair of content sources and reports
  * line statistics. All commands funnel through here so that behaviour
- * (titles, read-only marking, stats) stays consistent.
+ * (titles, read-only marking, stats, history) stays consistent.
  */
 export class DiffViewManager {
   static async open(left: DiffSource, right: DiffSource, options: DiffOpenOptions = {}): Promise<void> {
@@ -30,6 +42,13 @@ export class DiffViewManager {
       `${left.title} ↔ ${right.title}`,
       { preview: false, viewColumn: options.viewColumn ?? vscode.ViewColumn.Active },
     );
+
+    // History is best-effort: a failure must never break the comparison.
+    try {
+      await recorder?.record(left, right);
+    } catch {
+      // Ignore: the diff is already on screen.
+    }
 
     if (statsEnabled) {
       await DiffViewManager.reportStats(left, right, options.ignore);
