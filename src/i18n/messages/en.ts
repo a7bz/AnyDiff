@@ -31,6 +31,13 @@ export const en = {
   // Manual input prompt
   'input.title': 'AnyDiff: paste or type the content to compare with',
   'input.placeholder': 'Type or paste content, then press Enter to compare (Esc to cancel)',
+  'input.submit': 'Compare',
+  'input.cancel': 'Cancel',
+
+  // Selection vs selection
+  'selection.stashed': 'AnyDiff: selection saved. Select another snippet and run the command again to compare.',
+  'selection.pickTitle': 'AnyDiff: compare the current selection with',
+  'selection.pickPlaceholder': 'Pick a previously captured selection',
 
   // Clipboard history
   'clipboard.title': 'AnyDiff: clipboard history',
@@ -39,17 +46,26 @@ export const en = {
   'clipboard.targetActiveEditor': 'Active editor',
   'clipboard.targetChooseFile': 'Choose file…',
   'clipboard.entryTitle': 'Clipboard history',
+  'clipboard.clear': 'Clear clipboard history',
+  'clipboard.cleared': 'AnyDiff: clipboard history cleared.',
+  'clipboard.lineCount': '{0} line(s)',
 
   // Recent comparisons
   'recent.title': 'AnyDiff: recent comparisons',
   'recent.empty': 'AnyDiff: no recent comparisons yet.',
   'recent.placeholder': 'Select a comparison to re-open',
+  'recent.unavailable': 'AnyDiff: this comparison can no longer be restored.',
 
   // Git
   'git.headLabel': 'HEAD',
   'git.headDescription': 'Latest commit',
-  'git.commitDescription': 'Commit',
+  'git.indexLabel': 'Index (staged)',
+  'git.indexDescription': 'Content staged for the next commit',
+  'git.worktreeLabel': 'Working tree',
+  'git.worktreeDescription': 'The file as it is on disk',
   'git.pickTitle': 'AnyDiff: compare {0} with',
+  'git.pickLeftTitle': 'AnyDiff: left side — {0}',
+  'git.pickRightTitle': 'AnyDiff: right side — {0}',
   'git.pickPlaceholder': 'Select a revision',
   'git.workingSuffix': 'working',
 
@@ -69,13 +85,7 @@ export const en = {
   'source.empty': '(empty)',
   'source.activeSuffix': 'active',
   'source.wholeFileSuffix': 'whole file',
-  'source.workingSuffix': 'working',
   'source.unknownFile': 'untitled',
-
-  // Language setting labels
-  'language.auto': 'Auto (follow the VSCode UI language)',
-  'language.en': 'English',
-  'language.zhCn': '中文（简体）',
 
   // About
   'about.message': 'AnyDiff {0} — compare anything: files, selections, clipboard and Git versions.',
@@ -86,6 +96,7 @@ export const en = {
   'panel.changedRows': 'changed rows',
   'panel.stableRows': 'stable rows',
   'panel.columns': 'Columns',
+  'panel.onlyChanged': 'Only changes',
   'multi.pickTitle': 'AnyDiff: add column {0}',
   'multi.pickPlaceholder': '{0} column(s) so far — pick another source, or finish',
   'multi.source.selection': 'Another selection',
@@ -94,6 +105,25 @@ export const en = {
   'multi.source.input': 'Manual input',
   'multi.source.done': 'Done, open the panel',
   'error.multiDiffNeedsTwo': 'AnyDiff: a multi-way comparison needs at least two columns.',
+
+  // JSON semantic comparison
+  'json.flatSuffix': 'flattened',
+  'json.invalid': 'AnyDiff: {0} is not valid JSON — {1}',
+
+  // Saved sessions
+  'session.saveTitle': 'AnyDiff: save comparison session',
+  'session.savePrompt': 'Name this comparison so you can reopen it later',
+  'session.nameRequired': 'A name is required',
+  'session.saved': 'AnyDiff: session "{0}" saved.',
+  'session.noPanel': 'AnyDiff: open a multi-way comparison panel first.',
+  'session.openTitle': 'AnyDiff: saved sessions',
+  'session.openPlaceholder': 'Pick a session to reopen',
+  'session.empty': 'AnyDiff: no saved sessions yet.',
+  'session.clear': 'Delete all sessions',
+  'session.cleared': 'AnyDiff: saved sessions deleted.',
+
+  // Welcome
+  'welcome.fallback': 'AnyDiff is ready — run any command from the "AnyDiff" category in the command palette.',
 } as const;
 
 export type MessageKey = keyof typeof en;
