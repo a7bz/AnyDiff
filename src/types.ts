@@ -1,4 +1,7 @@
 import type * as vscode from 'vscode';
+import type { IgnoreOptions } from './utils/config';
+
+export type { IgnoreOptions };
 
 export interface DiffStats {
   /** Number of lines only present in the right side. */
@@ -11,12 +14,6 @@ export interface DiffStats {
   leftTotal: number;
   /** Total lines of the right side. */
   rightTotal: number;
-}
-
-export interface IgnoreOptions {
-  ignoreTrimWhitespace?: boolean;
-  ignoreAllWhitespace?: boolean;
-  ignoreCase?: boolean;
 }
 
 /** Options used when opening a diff view. */

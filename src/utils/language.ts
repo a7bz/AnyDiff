@@ -46,6 +46,62 @@ const LANGUAGE_BY_EXTENSION: Record<string, string> = {
   '.svelte': 'svelte',
 };
 
+/**
+ * Canonical file extension for a language id.
+ *
+ * Virtual documents are served through the `any-diff:` scheme and VSCode
+ * derives their language from the uri path, so the registered path must carry
+ * an extension that maps back to the language. Languages without an entry here
+ * fall back to `.txt` (plaintext).
+ */
+const EXTENSION_BY_LANGUAGE: Record<string, string> = {
+  typescript: 'ts',
+  typescriptreact: 'tsx',
+  javascript: 'js',
+  javascriptreact: 'jsx',
+  json: 'json',
+  jsonc: 'jsonc',
+  markdown: 'md',
+  python: 'py',
+  ruby: 'rb',
+  go: 'go',
+  rust: 'rs',
+  java: 'java',
+  c: 'c',
+  cpp: 'cpp',
+  csharp: 'cs',
+  php: 'php',
+  html: 'html',
+  css: 'css',
+  scss: 'scss',
+  less: 'less',
+  xml: 'xml',
+  yaml: 'yaml',
+  toml: 'toml',
+  shellscript: 'sh',
+  powershell: 'ps1',
+  sql: 'sql',
+  swift: 'swift',
+  kotlin: 'kt',
+  lua: 'lua',
+  perl: 'pl',
+  r: 'r',
+  dart: 'dart',
+  vue: 'vue',
+  svelte: 'svelte',
+  dockerfile: 'dockerfile',
+  makefile: 'makefile',
+  plaintext: 'txt',
+};
+
+/** File extension (without the dot) to use for a virtual document. */
+export function extensionForLanguage(languageId: string | undefined): string {
+  if (!languageId) {
+    return 'txt';
+  }
+  return EXTENSION_BY_LANGUAGE[languageId] ?? 'txt';
+}
+
 /** Best-effort language id for a file path, used to highlight virtual docs. */
 export function languageIdOf(uri: vscode.Uri): string {
   const ext = path.extname(uri.fsPath).toLowerCase();

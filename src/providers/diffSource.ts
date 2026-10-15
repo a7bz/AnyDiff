@@ -20,7 +20,3 @@ export interface DiffSource {
   /** Text content, available for virtual sources (used by stats/patch). */
   text?(): Promise<string>;
 }
-
-export function isVirtualSource(source: DiffSource): source is DiffSource & { text(): Promise<string> } {
-  return typeof source.text === 'function';
-}
