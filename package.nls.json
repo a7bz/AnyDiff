@@ -1,0 +1,24 @@
+{
+  "anydiff.command.category": "AnyDiff",
+  "anydiff.command.compareFiles": "Compare Two Files",
+  "anydiff.command.compareMultipleFiles": "Compare Selected Files with Each Other",
+  "anydiff.command.compareFileWithActive": "Compare File with Active Editor",
+  "anydiff.command.compareSelectedWithClipboard": "Compare Selection with Clipboard",
+  "anydiff.command.compareSelectedWithFile": "Compare Selection with Any File",
+  "anydiff.command.compareSelectedWithInput": "Compare Selection with Manual Input",
+  "anydiff.command.compareClipboardWithFile": "Compare Clipboard with Any File",
+  "anydiff.command.showClipboardHistory": "Show Clipboard History",
+  "anydiff.command.compareWithGitHead": "Compare with Git HEAD",
+  "anydiff.command.showRecent": "Show Recent Comparisons",
+  "anydiff.command.exportPatch": "Export Current Comparison as Patch",
+  "anydiff.command.about": "About",
+  "anydiff.command.openMultiDiffPanel": "Open Multi-Way Comparison Panel",
+
+  "anydiff.language": "Interface language. `auto` follows the VSCode UI language.",
+  "anydiff.ignoreTrimWhitespace": "Ignore leading and trailing whitespace when comparing.",
+  "anydiff.ignoreAllWhitespace": "Ignore all whitespace changes when comparing.",
+  "anydiff.ignoreCase": "Perform a case-insensitive comparison.",
+  "anydiff.clipboardHistoryLimit": "Maximum number of clipboard entries kept in history.",
+  "anydiff.maxFileSizeMB": "Warn before comparing files larger than this size (in MB).",
+  "anydiff.showStatsNotification": "Show `+/-` line counts in the status bar after a comparison."
+}

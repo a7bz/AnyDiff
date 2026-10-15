@@ -1,0 +1,24 @@
+{
+  "anydiff.command.category": "AnyDiff",
+  "anydiff.command.compareFiles": "选择两个文件对比",
+  "anydiff.command.compareMultipleFiles": "所选文件两两对比",
+  "anydiff.command.compareFileWithActive": "与当前编辑器文件对比",
+  "anydiff.command.compareSelectedWithClipboard": "选中内容与剪贴板对比",
+  "anydiff.command.compareSelectedWithFile": "选中内容与任意文件对比",
+  "anydiff.command.compareSelectedWithInput": "选中内容与手动输入对比",
+  "anydiff.command.compareClipboardWithFile": "剪贴板与任意文件对比",
+  "anydiff.command.showClipboardHistory": "查看剪贴板历史",
+  "anydiff.command.compareWithGitHead": "与 Git HEAD 对比",
+  "anydiff.command.showRecent": "查看最近对比记录",
+  "anydiff.command.exportPatch": "导出当前对比为补丁",
+  "anydiff.command.about": "关于",
+  "anydiff.command.openMultiDiffPanel": "打开多列对比面板",
+
+  "anydiff.language": "界面语言。`auto` 表示跟随 VSCode 界面语言。",
+  "anydiff.ignoreTrimWhitespace": "对比时忽略行首和行尾的空白字符。",
+  "anydiff.ignoreAllWhitespace": "对比时忽略所有空白字符的变化。",
+  "anydiff.ignoreCase": "对比时忽略大小写。",
+  "anydiff.clipboardHistoryLimit": "剪贴板历史保留的最大条目数。",
+  "anydiff.maxFileSizeMB": "对比大于该大小（MB）的文件前弹出警告。",
+  "anydiff.showStatsNotification": "对比完成后在状态栏显示 `+/-` 行数统计。"
+}
