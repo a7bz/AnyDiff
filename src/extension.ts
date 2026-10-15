@@ -6,14 +6,21 @@ import {
   compareSelectedWithClipboardCommand,
   compareSelectedWithFileCommand,
   compareSelectedWithInputCommand,
+  compareSelectionWithSelectionCommand,
+  SelectionStash,
 } from './commands/compareSelected';
 import { ClipboardHistory, showClipboardHistoryCommand } from './commands/clipboardHistory';
-import { compareWithGitHeadCommand } from './commands/gitCompare';
+import { compareGitRevisionsCommand, compareWithGitHeadCommand } from './commands/gitCompare';
 import { exportPatchCommand } from './commands/exportPatch';
 import { RecentComparisons, showRecentCommand } from './commands/recentComparisons';
 import { compareMultipleFilesCommand } from './commands/compareMultiple';
+import { compareJsonSemanticCommand, compareJsonWithActiveCommand } from './commands/compareJson';
 import { openMultiDiffPanelCommand } from './commands/multiDiff';
+import { openSessionCommand, saveSessionCommand, SessionStore } from './commands/sessions';
 import { VirtualDocProvider } from './providers/virtualDocProvider';
+import { setDiffRecorder } from './views/diffViewManager';
+import { startClipboardWatch } from './utils/clipboardWatcher';
+import { maybeShowWelcome } from './utils/welcome';
 
 export function activate(context: vscode.ExtensionContext): void {
   initI18n();
@@ -21,6 +28,13 @@ export function activate(context: vscode.ExtensionContext): void {
   const virtualDocs = new VirtualDocProvider();
   const history = new ClipboardHistory(context.globalState);
   const recent = new RecentComparisons(context.globalState);
+  const stash = new SelectionStash();
+  const sessions = new SessionStore(context.globalState);
+
+  // Every comparison opened through the manager is remembered for `showRecent`.
+  setDiffRecorder(recent);
+  context.subscriptions.push(virtualDocs);
+  context.subscriptions.push({ dispose: () => setDiffRecorder(undefined) });
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
@@ -30,7 +44,9 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
 
-  vscode.workspace.registerTextDocumentContentProvider('any-diff', virtualDocs);
+  context.subscriptions.push(
+    vscode.workspace.registerTextDocumentContentProvider('any-diff', virtualDocs),
+  );
 
   const register = (id: string, handler: () => Promise<void> | void): void => {
     context.subscriptions.push(vscode.commands.registerCommand(id, handler));
@@ -45,18 +61,28 @@ export function activate(context: vscode.ExtensionContext): void {
   register('anydiff.compareFileWithActive', () => compareFileWithActiveCommand());
   register('anydiff.compareSelectedWithClipboard', () => compareSelectedWithClipboardCommand(virtualDocs));
   register('anydiff.compareSelectedWithFile', () => compareSelectedWithFileCommand(virtualDocs));
-  register('anydiff.compareSelectedWithInput', () => compareSelectedWithInputCommand(virtualDocs));
+  register('anydiff.compareSelectedWithInput', () =>
+    compareSelectedWithInputCommand(virtualDocs, context.extensionUri));
+  register('anydiff.compareSelectionWithSelection', () =>
+    compareSelectionWithSelectionCommand(virtualDocs, stash));
   register('anydiff.compareClipboardWithFile', () => compareClipboardWithFileCommand(virtualDocs));
+  register('anydiff.compareJsonSemantic', () => compareJsonSemanticCommand(virtualDocs));
+  register('anydiff.compareJsonWithActive', () => compareJsonWithActiveCommand(virtualDocs));
   register('anydiff.compareWithGitHead', () => compareWithGitHeadCommand(virtualDocs));
+  register('anydiff.compareGitRevisions', () => compareGitRevisionsCommand(virtualDocs));
   register('anydiff.showClipboardHistory', () => showClipboardHistoryCommand(history, virtualDocs));
-  register('anydiff.showRecent', () => showRecentCommand(recent));
+  register('anydiff.showRecent', () => showRecentCommand(recent, virtualDocs));
   register('anydiff.exportPatch', () => exportPatchCommand());
   register('anydiff.about', () => showAbout());
   register('anydiff.openMultiDiffPanel', () => openMultiDiffPanelCommand(context.extensionUri));
+  register('anydiff.saveSession', () => saveSessionCommand(sessions));
+  register('anydiff.openSession', () => openSessionCommand(sessions, context.extensionUri));
 
   // Track clipboard copies in the background for the history feature.
-  const watcher = startClipboardWatch(history);
-  context.subscriptions.push({ dispose: () => watcher.stop() });
+  context.subscriptions.push(startClipboardWatch(history));
+
+  // Show the walkthrough once, on the very first activation.
+  void maybeShowWelcome(context);
 }
 
 export function deactivate(): void {
@@ -70,7 +96,7 @@ function isUriLike(value: unknown): value is vscode.Uri {
 
 function showAbout(): void {
   vscode.window.showInformationMessage(
-    t('about.message', '0.1.0'),
+    t('about.message', version()),
     t('about.learnMore'),
   ).then((choice) => {
     if (choice === t('about.learnMore')) {
@@ -79,20 +105,10 @@ function showAbout(): void {
   });
 }
 
-/** Polls the clipboard and records new copies in the history. */
-function startClipboardWatch(history: ClipboardHistory): { stop(): void } {
-  let last = '';
-  const interval = setInterval(async () => {
-    try {
-      const current = await vscode.env.clipboard.readText();
-      if (current && current !== last) {
-        last = current;
-        await history.push(current);
-      }
-    } catch {
-      // Clipboard may be unavailable (e.g. remote session); ignore.
-    }
-  }, 1500);
-
-  return { stop: () => clearInterval(interval) };
+/** Version of the running extension, read from its manifest. */
+function version(): string {
+  const pkg = vscode.extensions.getExtension('anydiff.anydiff')?.packageJSON as
+    | { version?: string }
+    | undefined;
+  return pkg?.version ?? '0.0.0';
 }
