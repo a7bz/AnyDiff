@@ -11,9 +11,11 @@ scripts/**
 *.md
 !README.md
 !CHANGELOG.md
+!media/*.md
 !LICENSE.md
 !LICENSE
 *.vsix
+*.map
 .eslintrc*
 esbuild.js
 tsconfig.json

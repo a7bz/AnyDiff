@@ -1,4 +1,5 @@
 const esbuild = require('esbuild');
+const fs = require('fs');
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
@@ -19,6 +20,12 @@ const options = {
 };
 
 async function main() {
+  // A previous dev build may have left a source map behind; production must
+  // not ship it.
+  if (production) {
+    fs.rmSync(`${options.outfile}.map`, { force: true });
+  }
+
   const ctx = await esbuild.context(options);
   if (watch) {
     await ctx.watch();

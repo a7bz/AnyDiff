@@ -14,15 +14,17 @@ const { spawnSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { CODE, INSTALLED_DIR, ROOT, VSIX } = require('./lib.cjs');
 
-const ROOT = path.resolve(__dirname, '..');
-const VSIX = path.join(ROOT, 'anydiff-0.1.0.vsix');
 const WORK = path.join(os.tmpdir(), 'anydiff-nls-verify');
 const USER_DIR = path.join(WORK, 'user-data');
 const EXT_DIR = path.join(WORK, 'extensions');
-const CODE = process.platform === 'win32' ? 'code.cmd' : 'code';
 
 function main() {
+  if (!fs.existsSync(VSIX)) {
+    console.error(`FAIL: ${path.basename(VSIX)} not found — run "npx @vscode/vsce package" first.`);
+    process.exit(1);
+  }
   fs.rmSync(WORK, { recursive: true, force: true });
   fs.mkdirSync(WORK, { recursive: true });
 
@@ -35,13 +37,14 @@ function main() {
   console.log('install:', install.status, (install.stdout ?? '').trim());
 
   // 1. The localized manifest must be shipped.
-  const installed = path.join(EXT_DIR, 'anydiff.anydiff-0.1.0');
+  const installed = path.join(EXT_DIR, INSTALLED_DIR);
   const zhManifest = path.join(installed, 'package.nls.zh-cn.json');
   const enManifest = path.join(installed, 'package.nls.json');
   const checks = [
     ['package.nls.json (English base)', fs.existsSync(enManifest)],
     ['package.nls.zh-cn.json (Chinese)', fs.existsSync(zhManifest)],
     ['dist/extension.js (entry point)', fs.existsSync(path.join(installed, 'dist', 'extension.js'))],
+    ['walkthrough markdown shipped', fs.existsSync(path.join(installed, 'media', 'walkthrough-compare.md'))],
     ['no src/ leaked into package', !fs.existsSync(path.join(installed, 'src'))],
     ['no .vscode/ leaked into package', !fs.existsSync(path.join(installed, '.vscode'))],
   ];

@@ -10,15 +10,17 @@ const { spawnSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { CODE, VSIX } = require('./lib.cjs');
 
-const ROOT = path.resolve(__dirname, '..');
-const VSIX = path.join(ROOT, 'anydiff-0.1.0.vsix');
 const WORK = path.join(os.tmpdir(), 'anydiff-i18n-check');
 const USER_DIR = path.join(WORK, 'user-data');
 const EXT_DIR = path.join(WORK, 'extensions');
 
 function main() {
-  const CODE = process.platform === 'win32' ? 'code.cmd' : 'code';
+  if (!fs.existsSync(VSIX)) {
+    console.error(`FAIL: ${path.basename(VSIX)} not found — run "npx @vscode/vsce package" first.`);
+    process.exit(1);
+  }
   fs.rmSync(WORK, { recursive: true, force: true });
   fs.mkdirSync(WORK, { recursive: true });
   fs.writeFileSync(path.join(WORK, 'sample.txt'), 'hello\nworld\n');

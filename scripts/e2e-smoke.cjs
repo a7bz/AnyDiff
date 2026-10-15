@@ -13,15 +13,18 @@ const { spawnSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { CODE, VSIX } = require('./lib.cjs');
 
-const ROOT = path.resolve(__dirname, '..');
-const VSIX = path.join(ROOT, 'anydiff-0.1.0.vsix');
 const WORK = path.join(os.tmpdir(), 'anydiff-e2e');
 const USER_DIR = path.join(WORK, 'user-data');
 const EXT_DIR = path.join(WORK, 'extensions');
 const LOG_DIR = path.join(USER_DIR, 'logs');
 
 function main() {
+  if (!fs.existsSync(VSIX)) {
+    console.error(`FAIL: ${path.basename(VSIX)} not found — run "npx @vscode/vsce package" first.`);
+    process.exit(1);
+  }
   fs.rmSync(WORK, { recursive: true, force: true });
   fs.mkdirSync(path.join(WORK, '.vscode'), { recursive: true });
 
@@ -31,12 +34,13 @@ function main() {
   const base = ['--user-data-dir', USER_DIR, '--extensions-dir', EXT_DIR];
 
   // 1) Install into the scratch profile.
-  const install = spawnSync('code', [...base, '--install-extension', VSIX, '--force'], {
+  const install = spawnSync(CODE, [...base, '--install-extension', VSIX, '--force'], {
     encoding: 'utf8',
+    shell: true,
   });
   console.log(install.stdout || install.stderr);
 
-  const list = spawnSync('code', [...base, '--list-extensions'], { encoding: 'utf8' });
+  const list = spawnSync(CODE, [...base, '--list-extensions'], { encoding: 'utf8', shell: true });
   if (!list.stdout.includes('anydiff')) {
     console.error('FAIL: extension not installed');
     process.exit(1);
@@ -45,10 +49,10 @@ function main() {
 
   // 2) Open the workspace; the extension activates (workspace contains files).
   const open = spawnSync(
-    'code',
+    CODE,
     [...base, '--wait', WORK, '--diff',
       path.join(WORK, 'left.txt'), path.join(WORK, 'right.txt')],
-    { encoding: 'utf8', timeout: 60000 },
+    { encoding: 'utf8', timeout: 60000, shell: true },
   );
   console.log('open rc:', open.status);
 
