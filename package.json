@@ -260,7 +260,11 @@
       "properties": {
         "anydiff.language": {
           "type": "string",
-          "enum": ["auto", "en", "zh-cn"],
+          "enum": [
+            "auto",
+            "en",
+            "zh-cn"
+          ],
           "default": "auto",
           "markdownDescription": "%anydiff.language%"
         },
@@ -348,7 +352,7 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch",
     "package": "npm run check-types && node esbuild.js --production",
-    "vsix": "npm run package && npx @vscode/vsce package --no-dependencies",
+    "vsix": "npm run package && vsce package --no-dependencies",
     "verify:nls": "node scripts/verify-nls.cjs",
     "verify:i18n": "node scripts/check-i18n.cjs",
     "verify:e2e": "node scripts/e2e-smoke.cjs",
@@ -359,6 +363,7 @@
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.9.2",
     "esbuild": "^0.24.0",
     "npm-run-all": "^4.1.5",
     "typescript": "^5.6.0",
