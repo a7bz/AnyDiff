@@ -1,13 +1,20 @@
 import * as vscode from 'vscode';
 import { t } from '../i18n';
-import { createUnifiedDiff, splitLines } from '../utils/patch';
+import { createUnifiedDiff } from '../utils/patch';
+
+export interface DiffSides {
+  leftText: string;
+  rightText: string;
+  leftTitle: string;
+  rightTitle: string;
+}
 
 /**
- * `anydiff.exportPatch` — exports the text of the two sides of the currently
- * focused diff editor as a unified diff file.
+ * `anydiff.exportPatch` — exports the two sides of the active diff editor as
+ * a unified diff file.
  */
 export async function exportPatchCommand(): Promise<void> {
-  const sides = collectDiffSides();
+  const sides = await collectDiffSides();
   if (!sides) {
     vscode.window.showWarningMessage(t('patch.noDiffOpen'));
     return;
@@ -37,39 +44,71 @@ export async function exportPatchCommand(): Promise<void> {
 }
 
 /**
- * Reads the two documents of the currently visible diff editor, when VSCode
- * exposes them through the tab groups.
+ * Reads the two documents of the active diff editor.
+ *
+ * The active tab is tried first so the command exports what the user is
+ * looking at; when the active tab is not a diff, the first diff tab in any
+ * group is used as a fallback.
  */
-export function collectDiffSides(): { leftText: string; rightText: string; leftTitle: string; rightTitle: string } | undefined {
-  for (const group of vscode.window.tabGroups.all) {
-    for (const tab of group.tabs) {
-      const inputs = collectInputs(tab);
-      if (inputs) {
-        return inputs;
-      }
+export async function collectDiffSides(): Promise<DiffSides | undefined> {
+  const candidates = [
+    vscode.window.tabGroups.activeTabGroup.activeTab,
+    ...vscode.window.tabGroups.all.flatMap((group) => group.tabs),
+  ];
+  for (const tab of candidates) {
+    if (!tab) {
+      continue;
+    }
+    const sides = await readTab(tab);
+    if (sides) {
+      return sides;
     }
   }
   return undefined;
 }
 
-function collectInputs(tab: vscode.Tab): { leftText: string; rightText: string; leftTitle: string; rightTitle: string } | undefined {
-  const input = tab.input as unknown as {
-    textDiffs?: Array<{ document: vscode.TextDocument }>;
-    original?: vscode.TextDocument;
-    modified?: vscode.TextDocument;
+async function readTab(tab: vscode.Tab): Promise<DiffSides | undefined> {
+  const input = tab.input as {
+    original?: vscode.Uri;
+    modified?: vscode.Uri;
+    textDiffs?: Array<{ original: vscode.Uri; modified: vscode.Uri }>;
   };
-  const modified = input?.modified;
-  const original = input?.original ?? input?.textDiffs?.[0]?.document;
-  if (!original || !modified) {
+
+  const pair = input.original && input.modified
+    ? { original: input.original, modified: input.modified }
+    : input.textDiffs?.[0];
+  if (!pair) {
     return undefined;
   }
-  return {
-    leftText: original.getText(),
-    rightText: modified.getText(),
-    leftTitle: original.uri.fsPath,
-    rightTitle: modified.uri.fsPath,
-  };
+
+  try {
+    const [leftText, rightText] = await Promise.all([
+      readUri(pair.original),
+      readUri(pair.modified),
+    ]);
+    return {
+      leftText,
+      rightText,
+      leftTitle: titleOf(pair.original),
+      rightTitle: titleOf(pair.modified),
+    };
+  } catch {
+    return undefined;
+  }
 }
 
-/** Re-exported for tests. */
-export { splitLines };
+async function readUri(uri: vscode.Uri): Promise<string> {
+  const open = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === uri.toString());
+  if (open) {
+    return open.getText();
+  }
+  const bytes = await vscode.workspace.fs.readFile(uri);
+  return Buffer.from(bytes).toString('utf8');
+}
+
+function titleOf(uri: vscode.Uri): string {
+  if (uri.scheme === 'file') {
+    return vscode.workspace.asRelativePath(uri, false) || uri.fsPath;
+  }
+  return uri.path.split('/').filter(Boolean).slice(-2).join('/') || uri.toString();
+}

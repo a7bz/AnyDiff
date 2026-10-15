@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 import { t } from '../i18n';
 import { MultiDiffPanel, type MultiDiffColumn } from '../views/multiDiffPanel';
-import { captureSelection, promptForText } from './compareSelected';
+import { promptForMultilineText } from '../views/textInputPanel';
+import { captureSelection } from './compareSelected';
 import { pickFile } from '../utils/filePicker';
+import { languageIdOf } from '../utils/language';
 
 /** `anydiff.openMultiDiffPanel` — assemble 2–3 columns and open the panel. */
 export async function openMultiDiffPanelCommand(extensionUri: vscode.Uri): Promise<void> {
@@ -11,13 +13,13 @@ export async function openMultiDiffPanelCommand(extensionUri: vscode.Uri): Promi
   // Column 1: the selection (or the whole active file), when there is one.
   const selection = captureSelection();
   if (selection) {
-    columns.push({ title: selection.origin, text: selection.text });
+    columns.push({ title: selection.origin, text: selection.text, languageId: selection.languageId });
   }
 
   while (columns.length < 3) {
     const source = await vscode.window.showQuickPick(
       [
-        { label: t('multi.source.selection'), value: 'selection' as const, picked: false },
+        { label: t('multi.source.selection'), value: 'selection' as const },
         { label: t('multi.source.file'), value: 'file' as const },
         { label: t('multi.source.clipboard'), value: 'clipboard' as const },
         { label: t('multi.source.input'), value: 'input' as const },
@@ -38,7 +40,7 @@ export async function openMultiDiffPanelCommand(extensionUri: vscode.Uri): Promi
         vscode.window.showWarningMessage(t('error.noActiveEditor'));
         continue;
       }
-      columns.push({ title: next.origin, text: next.text });
+      columns.push({ title: next.origin, text: next.text, languageId: next.languageId });
       continue;
     }
 
@@ -58,12 +60,16 @@ export async function openMultiDiffPanelCommand(extensionUri: vscode.Uri): Promi
         continue;
       }
       const bytes = await vscode.workspace.fs.readFile(picked.uri);
-      columns.push({ title: picked.label, text: Buffer.from(bytes).toString('utf8') });
+      columns.push({
+        title: picked.label,
+        text: Buffer.from(bytes).toString('utf8'),
+        languageId: languageIdOf(picked.uri),
+      });
       continue;
     }
 
     if (source.value === 'input') {
-      const text = await promptForText({
+      const text = await promptForMultilineText(extensionUri, {
         title: t('input.title'),
         placeholder: t('input.placeholder'),
       });

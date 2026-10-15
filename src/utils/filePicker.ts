@@ -8,6 +8,13 @@ export interface PickedFile {
   label: string;
 }
 
+type FileItem = vscode.QuickPickItem & {
+  /** A workspace file selected from the list. */
+  uri?: vscode.Uri;
+  /** The "Browse…" entry that opens the system dialog. */
+  browse?: true;
+};
+
 /**
  * Picks a single file.
  *
@@ -21,22 +28,24 @@ export async function pickFile(
 ): Promise<PickedFile | undefined> {
   const excluded = options.exclude ?? [];
 
-  const browseItem: vscode.QuickPickItem = {
+  const browseItem: FileItem = {
     label: `$(folder-opened) ${t('picker.browse')}`,
     description: t('picker.browseDescription'),
     alwaysShow: true,
+    browse: true,
   };
 
-  const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem & { uri?: vscode.Uri }>();
+  const quickPick = vscode.window.createQuickPick<FileItem>();
   quickPick.title = options.title ?? t('picker.title.fileToCompare');
   quickPick.placeholder = t('picker.placeholder');
   quickPick.matchOnDescription = true;
   quickPick.matchOnDetail = true;
   quickPick.items = [browseItem];
 
-  const chosen = await new Promise<vscode.QuickPickItem & { uri?: vscode.Uri } | string | undefined>((resolve) => {
+  let browseRequested = false;
+  const chosen = await new Promise<FileItem | string | undefined>((resolve) => {
     let settled = false;
-    const finish = (value: typeof chosen) => {
+    const finish = (value: FileItem | string | undefined) => {
       if (!settled) {
         settled = true;
         resolve(value);
@@ -45,18 +54,21 @@ export async function pickFile(
 
     quickPick.onDidAccept(() => {
       const active = quickPick.activeItems[0];
-      if (!active) {
-        finish(undefined);
+      if (active?.browse) {
+        // Remember the intent, but let onDidHide resolve so the picker is
+        // fully closed before the modal file dialog opens.
+        browseRequested = true;
+        quickPick.hide();
         return;
       }
-      if (active.uri) {
+      if (active?.uri) {
         finish(active);
         return;
       }
       // Free-form path typed by the user.
       finish(quickPick.value);
     });
-    quickPick.onDidHide(() => finish(undefined));
+    quickPick.onDidHide(() => finish(browseRequested ? browseItem : undefined));
     quickPick.show();
 
     // Workspace files load lazily so the picker opens instantly.
@@ -64,8 +76,7 @@ export async function pickFile(
       if (settled) {
         return;
       }
-      const items = [browseItem, ...files.map(toQuickPickItem)];
-      quickPick.items = items;
+      quickPick.items = [browseItem, ...files.map(toQuickPickItem)];
     });
   });
 
@@ -133,7 +144,7 @@ async function loadWorkspaceFiles(excluded: vscode.Uri[]): Promise<PickedFile[]>
     .map((uri) => ({ uri, label: vscode.workspace.asRelativePath(uri, false) }));
 }
 
-function toQuickPickItem(file: PickedFile): vscode.QuickPickItem & { uri: vscode.Uri } {
+function toQuickPickItem(file: PickedFile): FileItem {
   return {
     label: `$(file) ${file.label}`,
     description: path.dirname(file.uri.fsPath),

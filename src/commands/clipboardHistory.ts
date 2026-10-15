@@ -13,6 +13,7 @@ interface ClipboardEntry {
 }
 
 const LIMIT_DEFAULT = 20;
+const STORAGE_KEY = 'anydiff.clipboardHistory';
 
 /**
  * Keeps a rolling history of clipboard copies so users can diff against
@@ -22,7 +23,7 @@ export class ClipboardHistory {
   private entries: ClipboardEntry[] = [];
 
   constructor(private readonly state: vscode.Memento) {
-    this.entries = state.get<ClipboardEntry[]>('anydiff.clipboardHistory', []);
+    this.entries = state.get<ClipboardEntry[]>(STORAGE_KEY, []);
   }
 
   /** Records a copy; ignores duplicates of the most recent entry. */
@@ -31,8 +32,10 @@ export class ClipboardHistory {
     if (!trimmed || this.entries[0]?.text === trimmed) {
       return;
     }
-    this.entries = [{ text: trimmed, at: Date.now() }, ...this.entries].slice(0, this.limit());
-    await this.state.update('anydiff.clipboardHistory', this.entries);
+    // Re-copying an older entry should move it to the top, not duplicate it.
+    const rest = this.entries.filter((entry) => entry.text !== trimmed);
+    this.entries = [{ text: trimmed, at: Date.now() }, ...rest].slice(0, this.limit());
+    await this.state.update(STORAGE_KEY, this.entries);
   }
 
   /** Returns recorded entries, newest first. */
@@ -40,9 +43,9 @@ export class ClipboardHistory {
     return this.entries;
   }
 
-  clear(): void {
+  async clear(): Promise<void> {
     this.entries = [];
-    void this.state.update('anydiff.clipboardHistory', []);
+    await this.state.update(STORAGE_KEY, []);
   }
 
   private limit(): number {
@@ -51,6 +54,8 @@ export class ClipboardHistory {
       .get<number>('clipboardHistoryLimit', LIMIT_DEFAULT);
   }
 }
+
+type HistoryItem = vscode.QuickPickItem & { entry?: ClipboardEntry; clear?: true };
 
 /** `anydiff.showClipboardHistory` — pick a past clipboard copy to diff. */
 export async function showClipboardHistoryCommand(
@@ -63,28 +68,37 @@ export async function showClipboardHistoryCommand(
     return;
   }
 
-  const items = entries.map((entry, index) => ({
-    label: `#${index + 1}  ${preview(entry.text)}`,
-    description: new Date(entry.at).toLocaleString(),
-    entry,
-  }));
+  const items: HistoryItem[] = [
+    ...entries.map((entry, index) => ({
+      label: `#${index + 1}  ${preview(entry.text)}`,
+      description: new Date(entry.at).toLocaleString(),
+      detail: t('clipboard.lineCount', countLines(entry.text)),
+      entry,
+    })),
+    {
+      label: `$(trash) ${t('clipboard.clear')}`,
+      alwaysShow: true,
+      clear: true,
+    },
+  ];
 
   const chosen = await vscode.window.showQuickPick(items, {
     title: t('clipboard.title'),
     placeHolder: t('clipboard.targetTitle'),
     matchOnDescription: true,
+    matchOnDetail: true,
   });
   if (!chosen) {
     return;
   }
-
-  const selection = vscode.window.activeTextEditor
-    ? vscode.window.activeTextEditor.document.getText(
-        vscode.window.activeTextEditor.selection.isEmpty
-          ? undefined
-          : vscode.window.activeTextEditor.selection,
-      )
-    : undefined;
+  if (chosen.clear) {
+    await history.clear();
+    vscode.window.showInformationMessage(t('clipboard.cleared'));
+    return;
+  }
+  if (!chosen.entry) {
+    return;
+  }
 
   const target = await vscode.window.showQuickPick(
     [
@@ -100,18 +114,20 @@ export async function showClipboardHistoryCommand(
   const left: DiffSource = virtualDocs.createSource(chosen.entry.text, t('clipboard.entryTitle'), 'plaintext');
   let right: DiffSource;
 
-  if (target.value === 'editor' && selection !== undefined && vscode.window.activeTextEditor) {
-    const uri = vscode.window.activeTextEditor.document.uri;
+  if (target.value === 'editor') {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showWarningMessage(t('error.noActiveEditorToCompare'));
+      return;
+    }
+    const uri = editor.document.uri;
     right = fileSource(uri, `${relativePath(uri)} (${t('source.activeSuffix')})`);
-  } else if (target.value === 'file') {
+  } else {
     const picked = await pickFile({ title: t('picker.title.fileToCompare') });
     if (!picked) {
       return;
     }
     right = fileSource(picked.uri, picked.label);
-  } else {
-    vscode.window.showWarningMessage(t('error.noActiveEditorToCompare'));
-    return;
   }
 
   await DiffViewManager.open(left, right, { ignore: getIgnoreOptions() });
@@ -120,4 +136,9 @@ export async function showClipboardHistoryCommand(
 function preview(text: string): string {
   const single = text.replace(/\s+/g, ' ').trim();
   return single.length > 80 ? `${single.slice(0, 80)}…` : single;
+}
+
+function countLines(text: string): number {
+  const lines = text.replace(/\r\n/g, '\n').split('\n');
+  return lines.length > 1 && lines[lines.length - 1] === '' ? lines.length - 1 : lines.length;
 }
