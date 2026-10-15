@@ -10,6 +10,12 @@ interface PackageJson {
     configuration?: {
       properties?: Record<string, { markdownDescription?: string; description?: string }>;
     };
+    walkthroughs?: Array<{
+      id: string;
+      title?: string;
+      description?: string;
+      steps?: Array<{ id: string; title?: string; description?: string }>;
+    }>;
   };
 }
 
@@ -21,21 +27,35 @@ function placeholders(value: string | undefined): string[] {
   return (value?.match(/%([^%]+)%/g) ?? []).map((token) => token.slice(1, -1));
 }
 
+/** Every `%key%` referenced anywhere in `contributes`. */
+function usedKeys(pkg: PackageJson): Set<string> {
+  const used = new Set<string>();
+  for (const command of pkg.contributes.commands ?? []) {
+    placeholders(command.title).forEach((k) => used.add(k));
+    placeholders(command.category).forEach((k) => used.add(k));
+  }
+  for (const setting of Object.values(pkg.contributes.configuration?.properties ?? {})) {
+    placeholders(setting.markdownDescription).forEach((k) => used.add(k));
+    placeholders(setting.description).forEach((k) => used.add(k));
+  }
+  for (const walkthrough of pkg.contributes.walkthroughs ?? []) {
+    placeholders(walkthrough.title).forEach((k) => used.add(k));
+    placeholders(walkthrough.description).forEach((k) => used.add(k));
+    for (const step of walkthrough.steps ?? []) {
+      placeholders(step.title).forEach((k) => used.add(k));
+      placeholders(step.description).forEach((k) => used.add(k));
+    }
+  }
+  return used;
+}
+
 describe('package.nls localization', () => {
   const pkg = readJson('package.json') as PackageJson;
   const en = readJson('package.nls.json') as Record<string, string>;
   const zhCn = readJson('package.nls.zh-cn.json') as Record<string, string>;
 
   it('defines every key used by package.json in both catalogs', () => {
-    const used = new Set<string>();
-    for (const command of pkg.contributes.commands ?? []) {
-      placeholders(command.title).forEach((k) => used.add(k));
-      placeholders(command.category).forEach((k) => used.add(k));
-    }
-    for (const setting of Object.values(pkg.contributes.configuration?.properties ?? {})) {
-      placeholders(setting.markdownDescription).forEach((k) => used.add(k));
-      placeholders(setting.description).forEach((k) => used.add(k));
-    }
+    const used = usedKeys(pkg);
 
     expect(used.size).toBeGreaterThan(0);
     for (const key of used) {
@@ -47,14 +67,7 @@ describe('package.nls localization', () => {
   });
 
   it('has no unused keys in the catalogs', () => {
-    const used = new Set<string>();
-    for (const command of pkg.contributes.commands ?? []) {
-      placeholders(command.title).forEach((k) => used.add(k));
-      placeholders(command.category).forEach((k) => used.add(k));
-    }
-    for (const setting of Object.values(pkg.contributes.configuration?.properties ?? {})) {
-      placeholders(setting.markdownDescription).forEach((k) => used.add(k));
-    }
+    const used = usedKeys(pkg);
     expect(Object.keys(en).sort()).toEqual([...used].sort());
     expect(Object.keys(zhCn).sort()).toEqual([...used].sort());
   });

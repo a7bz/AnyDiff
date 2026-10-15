@@ -1,12 +1,40 @@
+import { readdirSync, readFileSync } from 'fs';
+import path from 'path';
 import { describe, expect, it } from 'vitest';
 import { __setConfig, __setUiLanguage } from './__mocks__/vscode';
 import en, { type MessageKey } from '../src/i18n/messages/en';
 import zhCn from '../src/i18n/messages/zh-cn';
 import { initI18n, locale, resolveLocale, t } from '../src/i18n';
 
+const SRC = path.resolve(__dirname, '..', 'src');
+
+/** Every `.ts` file under `src/`, excluding the catalogs themselves. */
+function sourceFiles(dir: string): string[] {
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name !== 'i18n') {
+        out.push(...sourceFiles(full));
+      }
+    } else if (full.endsWith('.ts')) {
+      out.push(full);
+    }
+  }
+  return out;
+}
+
 describe('catalog integrity', () => {
   it('zh-cn defines exactly the same keys as en', () => {
     expect(Object.keys(zhCn).sort()).toEqual(Object.keys(en).sort());
+  });
+
+  it('uses every key somewhere in the source', () => {
+    const blob = sourceFiles(SRC)
+      .map((file) => readFileSync(file, 'utf8'))
+      .join('\n');
+    const unused = (Object.keys(en) as MessageKey[]).filter((key) => !blob.includes(`'${key}'`));
+    expect(unused, `unused message keys: ${unused.join(', ')}`).toEqual([]);
   });
 
   it('has no empty strings in any locale', () => {
