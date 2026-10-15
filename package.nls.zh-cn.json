@@ -6,13 +6,19 @@
   "anydiff.command.compareSelectedWithClipboard": "选中内容与剪贴板对比",
   "anydiff.command.compareSelectedWithFile": "选中内容与任意文件对比",
   "anydiff.command.compareSelectedWithInput": "选中内容与手动输入对比",
+  "anydiff.command.compareSelectionWithSelection": "选中内容与另一段选区对比",
   "anydiff.command.compareClipboardWithFile": "剪贴板与任意文件对比",
+  "anydiff.command.compareJsonSemantic": "结构化对比两个 JSON 文件",
+  "anydiff.command.compareJsonWithActive": "结构化对比 JSON 与当前文件",
   "anydiff.command.showClipboardHistory": "查看剪贴板历史",
   "anydiff.command.compareWithGitHead": "与 Git HEAD 对比",
+  "anydiff.command.compareGitRevisions": "对比两个 Git 版本",
   "anydiff.command.showRecent": "查看最近对比记录",
   "anydiff.command.exportPatch": "导出当前对比为补丁",
   "anydiff.command.about": "关于",
   "anydiff.command.openMultiDiffPanel": "打开多列对比面板",
+  "anydiff.command.saveSession": "保存对比会话",
+  "anydiff.command.openSession": "打开已保存的会话",
 
   "anydiff.language": "界面语言。`auto` 表示跟随 VSCode 界面语言。",
   "anydiff.ignoreTrimWhitespace": "对比时忽略行首和行尾的空白字符。",
@@ -20,5 +26,16 @@
   "anydiff.ignoreCase": "对比时忽略大小写。",
   "anydiff.clipboardHistoryLimit": "剪贴板历史保留的最大条目数。",
   "anydiff.maxFileSizeMB": "对比大于该大小（MB）的文件前弹出警告。",
-  "anydiff.showStatsNotification": "对比完成后在状态栏显示 `+/-` 行数统计。"
+  "anydiff.showStatsNotification": "对比完成后在状态栏显示 `+/-` 行数统计。",
+
+  "anydiff.walkthrough.title": "开始使用 AnyDiff",
+  "anydiff.walkthrough.description": "对比文件、选区、剪贴板与 Git 版本 — 无需再创建临时文件。",
+  "anydiff.walkthrough.compare.title": "对比两个文件",
+  "anydiff.walkthrough.compare.description": "选择任意两个文件，包括工作区之外的文件。",
+  "anydiff.walkthrough.selection.title": "对比选中内容",
+  "anydiff.walkthrough.selection.description": "选中代码后与剪贴板、文件或手动输入的内容对比。",
+  "anydiff.walkthrough.git.title": "与 Git 对比",
+  "anydiff.walkthrough.git.description": "查看相对 HEAD、某个提交，或任意两个版本之间的改动。",
+  "anydiff.walkthrough.panel.title": "多列对比",
+  "anydiff.walkthrough.panel.description": "将 2~3 个版本并排对齐，直观看出具体哪些行不同。"
 }

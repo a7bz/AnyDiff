@@ -2,9 +2,17 @@
   "name": "anydiff",
   "displayName": "AnyDiff",
   "description": "Compare anything: files, selections, clipboard, manual input and Git versions.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "anydiff",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anydiff/anydiff.git"
+  },
+  "bugs": {
+    "url": "https://github.com/anydiff/anydiff/issues"
+  },
+  "homepage": "https://github.com/anydiff/anydiff#readme",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -17,9 +25,13 @@
     "compare",
     "clipboard",
     "selection",
-    "git"
+    "git",
+    "json",
+    "multi-way"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "icon": "media/icon.png",
   "contributes": {
@@ -55,8 +67,23 @@
         "category": "%anydiff.command.category%"
       },
       {
+        "command": "anydiff.compareSelectionWithSelection",
+        "title": "%anydiff.command.compareSelectionWithSelection%",
+        "category": "%anydiff.command.category%"
+      },
+      {
         "command": "anydiff.compareClipboardWithFile",
         "title": "%anydiff.command.compareClipboardWithFile%",
+        "category": "%anydiff.command.category%"
+      },
+      {
+        "command": "anydiff.compareJsonSemantic",
+        "title": "%anydiff.command.compareJsonSemantic%",
+        "category": "%anydiff.command.category%"
+      },
+      {
+        "command": "anydiff.compareJsonWithActive",
+        "title": "%anydiff.command.compareJsonWithActive%",
         "category": "%anydiff.command.category%"
       },
       {
@@ -67,6 +94,11 @@
       {
         "command": "anydiff.compareWithGitHead",
         "title": "%anydiff.command.compareWithGitHead%",
+        "category": "%anydiff.command.category%"
+      },
+      {
+        "command": "anydiff.compareGitRevisions",
+        "title": "%anydiff.command.compareGitRevisions%",
         "category": "%anydiff.command.category%"
       },
       {
@@ -85,6 +117,16 @@
         "category": "%anydiff.command.category%"
       },
       {
+        "command": "anydiff.saveSession",
+        "title": "%anydiff.command.saveSession%",
+        "category": "%anydiff.command.category%"
+      },
+      {
+        "command": "anydiff.openSession",
+        "title": "%anydiff.command.openSession%",
+        "category": "%anydiff.command.category%"
+      },
+      {
         "command": "anydiff.about",
         "title": "%anydiff.command.about%",
         "category": "%anydiff.command.category%"
@@ -100,6 +142,11 @@
       "editor/title": [
         {
           "command": "anydiff.exportPatch",
+          "when": "isInDiffEditor",
+          "group": "navigation@100"
+        },
+        {
+          "command": "anydiff.saveSession",
           "when": "activeWebviewPanelId == anydiff.multiDiffPanel",
           "group": "navigation@100"
         }
@@ -121,14 +168,24 @@
           "group": "2_anydiff@3"
         },
         {
+          "command": "anydiff.compareSelectionWithSelection",
+          "when": "editorTextFocus && editorHasSelection",
+          "group": "2_anydiff@4"
+        },
+        {
           "command": "anydiff.compareFileWithActive",
           "when": "editorTextFocus && !editorHasSelection",
-          "group": "2_anydiff@4"
+          "group": "2_anydiff@5"
         },
         {
           "command": "anydiff.compareWithGitHead",
           "when": "editorTextFocus",
-          "group": "2_anydiff@5"
+          "group": "2_anydiff@6"
+        },
+        {
+          "command": "anydiff.compareGitRevisions",
+          "when": "editorTextFocus",
+          "group": "2_anydiff@7"
         }
       ],
       "explorer/context": [
@@ -138,14 +195,19 @@
           "group": "2_anydiff@1"
         },
         {
+          "command": "anydiff.compareJsonSemantic",
+          "when": "!explorerResourceIsFolder && !explorerResourceMultiSelected && resourceExtname =~ /\\.jsonc?$/",
+          "group": "2_anydiff@2"
+        },
+        {
           "command": "anydiff.compareMultipleFiles",
           "when": "explorerResourceMultiSelected",
-          "group": "2_anydiff@2"
+          "group": "2_anydiff@3"
         },
         {
           "command": "anydiff.compareFiles",
           "when": "!explorerResourceMultiSelected",
-          "group": "2_anydiff@3"
+          "group": "2_anydiff@4"
         }
       ]
     },
@@ -169,9 +231,27 @@
         "when": "false"
       },
       {
+        "command": "anydiff.compareSelectionWithSelection",
+        "key": "ctrl+k s",
+        "mac": "cmd+k s",
+        "when": "false"
+      },
+      {
         "command": "anydiff.compareWithGitHead",
         "key": "ctrl+k g",
         "mac": "cmd+k g",
+        "when": "false"
+      },
+      {
+        "command": "anydiff.compareGitRevisions",
+        "key": "ctrl+k r",
+        "mac": "cmd+k r",
+        "when": "false"
+      },
+      {
+        "command": "anydiff.showRecent",
+        "key": "ctrl+k h",
+        "mac": "cmd+k h",
         "when": "false"
       }
     ],
@@ -217,7 +297,48 @@
           "markdownDescription": "%anydiff.showStatsNotification%"
         }
       }
-    }
+    },
+    "walkthroughs": [
+      {
+        "id": "anydiff.gettingStarted",
+        "title": "%anydiff.walkthrough.title%",
+        "description": "%anydiff.walkthrough.description%",
+        "steps": [
+          {
+            "id": "compare",
+            "title": "%anydiff.walkthrough.compare.title%",
+            "description": "%anydiff.walkthrough.compare.description%",
+            "media": {
+              "markdown": "media/walkthrough-compare.md"
+            }
+          },
+          {
+            "id": "selection",
+            "title": "%anydiff.walkthrough.selection.title%",
+            "description": "%anydiff.walkthrough.selection.description%",
+            "media": {
+              "markdown": "media/walkthrough-selection.md"
+            }
+          },
+          {
+            "id": "git",
+            "title": "%anydiff.walkthrough.git.title%",
+            "description": "%anydiff.walkthrough.git.description%",
+            "media": {
+              "markdown": "media/walkthrough-git.md"
+            }
+          },
+          {
+            "id": "panel",
+            "title": "%anydiff.walkthrough.panel.title%",
+            "description": "%anydiff.walkthrough.panel.description%",
+            "media": {
+              "markdown": "media/walkthrough-panel.md"
+            }
+          }
+        ]
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
@@ -227,6 +348,10 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch",
     "package": "npm run check-types && node esbuild.js --production",
+    "vsix": "npm run package && npx @vscode/vsce package --no-dependencies",
+    "verify:nls": "node scripts/verify-nls.cjs",
+    "verify:i18n": "node scripts/check-i18n.cjs",
+    "verify:e2e": "node scripts/e2e-smoke.cjs",
     "lint": "eslint src",
     "test": "vitest run",
     "test:watch": "vitest"

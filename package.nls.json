@@ -6,13 +6,19 @@
   "anydiff.command.compareSelectedWithClipboard": "Compare Selection with Clipboard",
   "anydiff.command.compareSelectedWithFile": "Compare Selection with Any File",
   "anydiff.command.compareSelectedWithInput": "Compare Selection with Manual Input",
+  "anydiff.command.compareSelectionWithSelection": "Compare Selection with Another Selection",
   "anydiff.command.compareClipboardWithFile": "Compare Clipboard with Any File",
+  "anydiff.command.compareJsonSemantic": "Compare Two JSON Files Structurally",
+  "anydiff.command.compareJsonWithActive": "Compare JSON with Active File Structurally",
   "anydiff.command.showClipboardHistory": "Show Clipboard History",
   "anydiff.command.compareWithGitHead": "Compare with Git HEAD",
+  "anydiff.command.compareGitRevisions": "Compare Two Git Revisions",
   "anydiff.command.showRecent": "Show Recent Comparisons",
   "anydiff.command.exportPatch": "Export Current Comparison as Patch",
   "anydiff.command.about": "About",
   "anydiff.command.openMultiDiffPanel": "Open Multi-Way Comparison Panel",
+  "anydiff.command.saveSession": "Save Comparison Session",
+  "anydiff.command.openSession": "Open Saved Session",
 
   "anydiff.language": "Interface language. `auto` follows the VSCode UI language.",
   "anydiff.ignoreTrimWhitespace": "Ignore leading and trailing whitespace when comparing.",
@@ -20,5 +26,16 @@
   "anydiff.ignoreCase": "Perform a case-insensitive comparison.",
   "anydiff.clipboardHistoryLimit": "Maximum number of clipboard entries kept in history.",
   "anydiff.maxFileSizeMB": "Warn before comparing files larger than this size (in MB).",
-  "anydiff.showStatsNotification": "Show `+/-` line counts in the status bar after a comparison."
+  "anydiff.showStatsNotification": "Show `+/-` line counts in the status bar after a comparison.",
+
+  "anydiff.walkthrough.title": "Get started with AnyDiff",
+  "anydiff.walkthrough.description": "Compare files, selections, the clipboard and Git versions — without creating temporary files.",
+  "anydiff.walkthrough.compare.title": "Compare two files",
+  "anydiff.walkthrough.compare.description": "Pick any two files, including ones outside the workspace.",
+  "anydiff.walkthrough.selection.title": "Compare a selection",
+  "anydiff.walkthrough.selection.description": "Select code and diff it against the clipboard, a file or something you type.",
+  "anydiff.walkthrough.git.title": "Compare with Git",
+  "anydiff.walkthrough.git.description": "See what changed since HEAD, a specific commit, or between any two revisions.",
+  "anydiff.walkthrough.panel.title": "Multi-way comparison",
+  "anydiff.walkthrough.panel.description": "Line up 2–3 versions side by side and see exactly which lines differ."
 }
